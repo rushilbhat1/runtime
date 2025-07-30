@@ -1,0 +1,196 @@
+/* XPECT_SETUP uk.ac.kcl.rbhat.charts.xpect.XPectTests END_SETUP */
+/*
+XPECT generated ---
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import to_rgb, to_hex
+
+def generate_colour_shades(base_colour, n_shades):
+	base_rgb = to_rgb(base_colour)
+	shades = []
+	for i in range(n_shades):
+		if n_shades == 1:
+			factor = 1.0
+		else:
+			factor = 0.3 + (i * 0.7 / (n_shades - 1))
+		shade = tuple(c * factor for c in base_rgb)
+		shades.append(to_hex(shade))
+	return shades
+
+def create_chart(chart_type, data, key_column, metric_column, title, base_colour, **kwargs):
+	fig, ax = plt.subplots(figsize=(10, 6))
+
+	split_by = kwargs.get("split_by")
+	show_values = kwargs.get("show_values", False)
+
+	group_cols = [key_column]
+	if split_by and chart_type != "pie":
+		group_cols.append(split_by)
+	enable_sort = pd.api.types.is_numeric_dtype(data[key_column])
+	grouped = data.groupby(group_cols, sort=enable_sort)[metric_column].sum()
+
+	if chart_type == "pie":
+		plot_pie(ax, grouped, key_column, base_colour, show_values)
+	else:
+		plot_xy(ax, chart_type, grouped, key_column, metric_column, base_colour, split_by)
+
+	ax.set_title(title)
+	plt.tight_layout()
+	return fig, ax
+
+def plot_xy(ax, chart_type, grouped, key_column, metric_column, base_colour, split_by):
+	x_values = grouped.index.get_level_values(key_column).unique()
+	categories = grouped.index.get_level_values(split_by).unique() if split_by else ["total"]
+	n_categories = len(categories)
+	colours = generate_colour_shades(base_colour, n_categories)
+	xs = np.arange(len(x_values))
+	width = 0.8 / n_categories if chart_type == "bar" else None
+
+	for i, cat in enumerate(categories):
+		ys = [grouped.get((x_val, cat) if split_by else x_val) for x_val in x_values]
+		label = cat if split_by else None
+		if chart_type == "bar":
+			offset = width * i
+			ax.bar(xs + offset, ys, width, color=colours[i], label=label)
+		else:
+			ax.plot(xs, ys, marker="o", color=colours[i], linewidth=2, label=label)
+
+	ax.set_xticks(xs + (width * (n_categories - 1) / 2 if chart_type == "bar" else 0))
+	ax.set_xticklabels(x_values)
+	ax.set_xlabel(key_column)
+	ax.set_ylabel(metric_column)
+	if split_by:
+		ax.legend(title=split_by, bbox_to_anchor=(1, 1), loc="upper left")
+
+def plot_pie(ax, grouped, key_column, base_colour, show_values):
+	labels = grouped.index.get_level_values(key_column).unique()
+	colours = generate_colour_shades(base_colour, len(labels))
+	values = grouped.values
+	
+	def format_pct(pct):
+		total = sum(values);
+		value = pct * total / 100
+		return "%.1f%%\n(%.1f)" % (pct, value) if show_values else "%.1f%%" % pct
+		
+	wedges, texts, autotexts = ax.pie(values, labels=labels, colors=colours, autopct=format_pct, startangle=90)
+	for t in autotexts:
+		t.set_color("white")
+		t.set_fontweight("bold")
+
+sales_data = pd.read_csv("sales.csv")
+inventory_data = pd.read_csv("inventory.csv")
+
+fig_0, ax_0 = create_chart(
+	chart_type="line",
+	data=sales_data,
+	key_column="month",
+	metric_column="revenue",
+	title="Revenue by Month", 
+	base_colour="blue"
+)
+fig_1, ax_1 = create_chart(
+	chart_type="bar",
+	data=sales_data,
+	key_column="product",
+	metric_column="units_sold",
+	title="Sales by Product",
+	base_colour="red"
+)
+fig_2, ax_2 = create_chart(
+	chart_type="pie",
+	data=sales_data,
+	key_column="month",
+	metric_column="units_sold",
+	title="Sales by Month", 
+	base_colour="magenta"
+)
+fig_3, ax_3 = create_chart(
+	chart_type="line",
+	data=inventory_data,
+	key_column="week",
+	metric_column="quantity",
+	title="Quantity by Week", 
+	split_by="location", 
+	base_colour="red"
+)
+fig_4, ax_4 = create_chart(
+	chart_type="bar",
+	data=inventory_data,
+	key_column="location",
+	metric_column="quantity",
+	title="Quantity by Location", 
+	split_by="item",
+	base_colour="green"
+)
+fig_5, ax_5 = create_chart(
+	chart_type="pie",
+	data=inventory_data,
+	key_column="item",
+	metric_column="quantity",
+	title="Quantity by Item", 
+	show_values=True, 
+	base_colour="cyan"
+)
+
+plt.show()
+---  
+*/
+data_source sales_data from "sales.csv" {
+	month: ordinal, categorical
+	product: categorical
+	revenue: measurable
+	units_sold: measurable
+}
+line_chart {
+	data: sales_data
+	title: "Revenue by Month"
+	x_axis: month
+	y_axis: revenue
+	colour: blue
+}
+
+bar_chart {
+	data: sales_data
+	title: "Sales by Product"
+	x_axis: product
+	y_axis: units_sold
+}
+pie_chart {
+	data: sales_data
+	title: "Sales by Month"
+	values: units_sold
+	labels: month
+	show_values: false
+	colour: magenta
+}
+data_source inventory_data from "inventory.csv" {
+	item: categorical
+	week: ordinal, categorical
+	location: categorical
+	quantity: measurable
+}
+line_chart {
+	data: inventory_data
+	title: "Quantity by Week"
+	x_axis: week
+	y_axis: quantity
+	split_by: location
+	colour: red
+}
+bar_chart {
+	data: inventory_data
+	title: "Quantity by Location"
+	x_axis: location
+	y_axis: quantity
+	split_by: item
+	colour: green
+}
+pie_chart {
+	data: inventory_data
+	title: "Quantity by Item"
+	values: quantity
+	labels: item
+	show_values: true
+	colour: cyan
+}

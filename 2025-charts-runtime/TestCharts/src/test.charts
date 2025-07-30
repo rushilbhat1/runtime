@@ -1,0 +1,57 @@
+data_source sales_data from "sales.csv" {
+	month: ordinal, categorical
+	product: categorical
+	revenue: measurable
+	units_sold: measurable
+}
+line_chart {
+	data: sales_data
+	title: "Revenue by Month"
+	x_axis: month
+	y_axis: revenue
+	colour: blue
+}
+bar_chart {
+	data: sales_data
+	title: "Sales by Product"
+	x_axis: product
+	y_axis: units_sold
+}
+pie_chart {
+	data: sales_data
+	title: "Sales by Month"
+	values: units_sold
+	labels: month
+	show_values: false
+	colour: magenta
+}
+data_source inventory_data from "inventory.csv" {
+	item: categorical
+	week: ordinal, categorical
+	location: categorical
+	quantity: measurable
+}
+line_chart {
+	data: inventory_data
+	title: "Quantity by Week"
+	x_axis: week
+	y_axis: quantity
+	split_by: location
+	colour: red
+}
+bar_chart {
+	data: inventory_data
+	title: "Quantity by Location"
+	x_axis: location
+	y_axis: quantity
+	split_by: item
+	colour: green
+}
+pie_chart {
+	data: inventory_data
+	title: "Quantity by Item"
+	values: quantity
+	labels: item
+	show_values: true
+	colour: cyan
+}
